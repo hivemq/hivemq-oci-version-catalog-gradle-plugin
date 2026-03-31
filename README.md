@@ -3,13 +3,12 @@
 [![Gradle Plugin Portal](https://img.shields.io/gradle-plugin-portal/v/com.hivemq.tools.oci-version-catalog?color=brightgreen&style=for-the-badge)](https://plugins.gradle.org/plugin/com.hivemq.tools.oci-version-catalog)
 [![GitHub](https://img.shields.io/github/license/hivemq/hivemq-oci-version-catalog-gradle-plugin?color=brightgreen&style=for-the-badge)](LICENSE)
 
-A Gradle **settings plugin** that reads OCI/Docker image definitions from `gradle/oci.versions.toml` and provides
+A Gradle settings plugin that reads OCI/Docker image definitions from `gradle/oci.versions.toml` and provides
 version-catalog-like accessors for the [gradle-oci](https://github.com/sgtsilvio/gradle-oci) plugin.
 
-## TOML Format
+## Example
 
-Create a `gradle/oci.versions.toml` file alongside your `libs.versions.toml`:
-
+Contents of the `gradle/oci.versions.toml` file:
 ```toml
 [[oci]]
 name = "eclipse-temurin"
@@ -18,18 +17,48 @@ tag = "25-jre-noble"
 
 [[oci]]
 name = "k3s-minimum"
-image = "rachner/k3s"
+image = "rancher/k3s"
 digest = "sha256:9e034931999854c6210b86a0708fde66b91370459fa077a4f9d008e7f51fc51d"
 tag = "v1.24.17-k3s1"
 update = false
 
 [[oci]]
 name = "k3s-latest"
-image = "rachner/k3s"
+image = "rancher/k3s"
 tag = "latest"
 ```
 
-### Fields
+Contents of the `settings.gradle.kts` file:
+```kotlin
+plugins {
+    id("com.hivemq.tools.oci-version-catalog") version "0.1.0"
+}
+```
+
+Contents of the `build.gradle.kts` file:
+```kotlin
+oci {
+    imageDefinitions {
+        register("main") {
+            allPlatforms {
+                dependencies {
+                    runtime(ociImages.eclipse.temurin.oci)
+                }
+            }
+        }
+    }
+}
+
+oci.of(integrationTest) {
+    imageDependencies {
+        runtime(ociImages.k3s.latest.oci).tag(ociImages.k3s.latest.tag)
+    }
+}
+```
+
+## Configuration
+
+### TOML Fields
 
 | Field    | Required | Description                                                        |
 |----------|----------|--------------------------------------------------------------------|
@@ -39,38 +68,10 @@ tag = "latest"
 | `tag`    | No       | Image tag. Used as fallback version if `digest` is not set.        |
 | `update` | No       | Set to `false` to skip Renovate updates. Defaults to `true`.       |
 
-Either `digest` or `tag` (or both) must be specified. Entries with a `digest` will use the digest for the gradle-oci
-notation; entries without will fall back to the `tag`.
+Either `digest` or `tag` (or both) must be specified.
+Entries with a `digest` will use the digest for the gradle-oci notation; entries without will fall back to the `tag`.
 
-## Gradle Plugin Setup
-
-### settings.gradle.kts
-
-```kotlin
-plugins {
-    id("com.hivemq.tools.oci-version-catalog") version "0.1.0"
-}
-```
-
-The plugin is applied once in settings and automatically injects the `ociImages` extension into all projects.
-No changes needed in `build.gradle.kts`.
-
-### Composite Builds
-
-For included builds that need access to `ociImages`, apply the plugin in each included build's
-`settings.gradle.kts`. The plugin walks up the directory tree to find `gradle/oci.versions.toml`, so it
-automatically picks up the parent project's TOML file.
-
-```kotlin
-// hivemq-platform-monitoring/settings.gradle.kts
-plugins {
-    id("com.hivemq.tools.oci-version-catalog") version "0.1.0"
-}
-
-rootProject.name = "hivemq-platform-monitoring"
-```
-
-## Usage in Build Scripts
+### Accessor Mapping
 
 Hyphens in `name` become nested accessors, like Gradle version catalogs:
 
@@ -89,30 +90,6 @@ Each accessor provides the following properties:
 | `tag`    | `String?` | Image tag (e.g. `21-jre-noble`)                                     |
 | `digest` | `String?` | Image digest in `sha256:<hash>` format                              |
 
-### Example
-
-```kotlin
-oci {
-    imageDefinitions {
-        register("main") {
-            allPlatforms {
-                dependencies {
-                    // digest-pinned parent image
-                    runtime(ociImages.eclipse.temurin.oci)
-                }
-            }
-        }
-    }
-}
-
-// test image dependencies
-oci.of(integrationTest) {
-    imageDependencies {
-        runtime(ociImages.k3s.latest.oci).tag(ociImages.k3s.latest.tag)
-    }
-}
-```
-
 ### OCI Notation Conversion
 
 The `oci` property converts the TOML format to gradle-oci dependency notation:
@@ -122,6 +99,21 @@ The `oci` property converts the TOML format to gradle-oci dependency notation:
 - Result: `rancher:k3s:sha256!a1234...`
 
 If no digest is set, the tag is used as the version: `rancher:k3s:v1.35.1-k3s1`
+
+### Composite Builds
+
+For included builds that need access to `ociImages`, apply the plugin in each included build's
+`settings.gradle.kts`. The plugin walks up the directory tree to find `gradle/oci.versions.toml`, so it
+automatically picks up the parent project's TOML file.
+
+```kotlin
+// hivemq-platform-monitoring/settings.gradle.kts
+plugins {
+    id("com.hivemq.tools.oci-version-catalog") version "0.1.0"
+}
+
+rootProject.name = "hivemq-platform-monitoring"
+```
 
 ## Renovate Integration
 
@@ -181,4 +173,16 @@ look up `linux:arm64` as a Maven package. Suppress this with a package rule:
         },
     ],
 }
+```
+
+## Requirements
+
+- Gradle 9.0 or higher is required
+- JDK 11 or higher is required
+
+## Build
+
+Execute the `check` task to run tests and validation:
+```shell
+./gradlew check
 ```
