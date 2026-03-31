@@ -1,0 +1,35 @@
+# CLAUDE.md
+
+## Project Overview
+
+Gradle settings plugin that reads `gradle/oci.versions.toml` and provides version-catalog-like accessors (`ociImages.*`) for the [gradle-oci](https://github.com/sgtsilvio/gradle-oci) plugin. Converts `sha256:` (OCI standard) to `sha256!` (gradle-oci format).
+
+## Tech Stack
+
+- Kotlin, Gradle settings plugin development (`Plugin<Settings>`)
+- tomlj for TOML parsing
+- JUnit 5 + AssertJ + GradleTestKit for testing
+
+## Key Files
+
+- `src/main/kotlin/.../OciVersionCatalogPlugin.kt` — Settings plugin entry point, reads TOML, creates extensions via `settings.gradle.allprojects`
+- `src/main/kotlin/.../OciImageEntry.kt` — Data class with `toOciNotation()` conversion
+- `src/main/kotlin/.../OciVersionCatalogEntryExtension.kt` — Leaf accessor with `image`, `tag`, `digest`, `oci` properties
+- `src/main/kotlin/.../OciVersionCatalogGroupExtension.kt` — Intermediate node for hyphen-separated names
+- `src/main/kotlin/.../OciVersionCatalogExtension.kt` — Top-level `ociImages` extension
+
+## Plugin Details
+
+- **Plugin ID:** `com.hivemq.tools.oci-version-catalog`
+- **Group:** `com.hivemq.tools`
+- **Package:** `com.hivemq.tools.oci.version.catalog`
+- **Extension name:** `ociImages`
+- Hyphens in TOML `name` become nested accessors: `eclipse-temurin` → `ociImages.eclipse.temurin`
+- Walks up directories from `settings.rootDir` to find `gradle/oci.versions.toml` (supports composite/included builds)
+
+## Build & Test
+
+```shell
+./gradlew check       # Full build + tests + spotless
+./gradlew test        # Run all tests
+```

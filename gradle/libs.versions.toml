@@ -1,0 +1,14 @@
+[versions]
+assertj = "3.27.7"
+junit-jupiter = "6.0.3"
+tomlj = "1.1.1"
+
+[libraries]
+assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
+tomlj = { module = "org.tomlj:tomlj", version.ref = "tomlj" }
+
+[plugins]
+pluginPublish = { id = "com.gradle.plugin-publish", version = "2.1.1" }
+defaults = { id = "io.github.sgtsilvio.gradle.defaults", version = "0.3.0" }
+metadata = { id = "io.github.sgtsilvio.gradle.metadata", version = "0.7.0" }
+spotless = { id = "com.diffplug.spotless", version = "8.4.0" }

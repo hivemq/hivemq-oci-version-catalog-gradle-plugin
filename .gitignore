@@ -1,0 +1,12 @@
+# Gradle
+.gradle
+build/
+
+# IntelliJ
+out/
+*.iml
+.idea
+.kotlin
+
+.java-version
+.DS_Store
