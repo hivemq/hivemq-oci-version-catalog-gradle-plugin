@@ -1,5 +1,8 @@
 # HiveMQ OCI Version Catalog Gradle Plugin
 
+[![Gradle Plugin Portal](https://img.shields.io/gradle-plugin-portal/v/com.hivemq.tools.oci-version-catalog?color=brightgreen&style=for-the-badge)](https://plugins.gradle.org/plugin/com.hivemq.tools.oci-version-catalog)
+[![GitHub](https://img.shields.io/github/license/hivemq/hivemq-oci-version-catalog-gradle-plugin?color=brightgreen&style=for-the-badge)](LICENSE)
+
 A Gradle **settings plugin** that reads OCI/Docker image definitions from `gradle/oci.versions.toml` and provides
 version-catalog-like accessors for the [gradle-oci](https://github.com/sgtsilvio/gradle-oci) plugin.
 
@@ -179,7 +182,3 @@ look up `linux:arm64` as a Maven package. Suppress this with a package rule:
     ],
 }
 ```
-
-## License
-
-[Apache License 2.0](LICENSE)
