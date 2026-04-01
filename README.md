@@ -13,19 +13,17 @@ Contents of the `gradle/oci.versions.toml` file:
 [[oci]]
 name = "eclipse-temurin"
 image = "library/eclipse-temurin"
-tag = "25-jre-noble"
+reference = "25-jre-noble@sha256:01868992089327fe0871354378a499e34823e6c7439d32ca62a4876a152f6ccb"
 
 [[oci]]
 name = "k3s-minimum"
 image = "rancher/k3s"
-digest = "sha256:9e034931999854c6210b86a0708fde66b91370459fa077a4f9d008e7f51fc51d"
-tag = "v1.24.17-k3s1"
-update = false
+pinnedReference = "v1.24.17-k3s1@sha256:9e034931999854c6210b86a0708fde66b91370459fa077a4f9d008e7f51fc51d"
 
 [[oci]]
 name = "k3s-latest"
 image = "rancher/k3s"
-tag = "latest"
+reference = "v1.35.3-k3s1@sha256:4607083d3cac07e1ccde7317297271d13ed5f60f35a78f33fcef84858a9f1d69"
 ```
 
 Contents of the `settings.gradle.kts` file:
@@ -60,16 +58,16 @@ oci.of(integrationTest) {
 
 ### TOML Fields
 
-| Field    | Required | Description                                                        |
-|----------|----------|--------------------------------------------------------------------|
-| `name`   | Yes      | Accessor key. Hyphens become nested accessors (e.g. `k3s-latest`). |
-| `image`  | Yes      | Docker image path (e.g. `library/eclipse-temurin`, `rancher/k3s`). |
-| `digest` | No       | Image digest in `sha256:<hash>` format. Recommended for pinning.   |
-| `tag`    | No       | Image tag. Used as fallback version if `digest` is not set.        |
-| `update` | No       | Set to `false` to skip Renovate updates. Defaults to `true`.       |
+| Field             | Required | Description                                                          |
+|-------------------|----------|----------------------------------------------------------------------|
+| `name`            | Yes      | Accessor key. Hyphens become nested accessors (e.g. `k3s-latest`).   |
+| `image`           | Yes      | Docker image path (e.g. `library/eclipse-temurin`, `rancher/k3s`).   |
+| `reference`       | *        | Image tag and digest as `tag@sha256:hash`. Updated by Renovate.      |
+| `pinnedReference` | *        | Same format as `reference`, but invisible to Renovate (not updated). |
 
-Either `digest` or `tag` (or both) must be specified.
-Entries with a `digest` will use the digest for the gradle-oci notation; entries without will fall back to the `tag`.
+Exactly one of `reference` or `pinnedReference` must be specified.
+The reference format is `tag@sha256:hash` (with digest) or just `tag` (without digest).
+Entries with a digest use it for the gradle-oci notation; entries without fall back to the tag.
 
 ### Accessor Mapping
 
@@ -87,7 +85,7 @@ Each accessor provides the following properties:
 |----------|-----------|---------------------------------------------------------------------|
 | `oci`    | `String`  | gradle-oci notation (e.g. `library:eclipse-temurin:sha256!0186...`) |
 | `image`  | `String`  | Original image path (e.g. `library/eclipse-temurin`)                |
-| `tag`    | `String?` | Image tag (e.g. `21-jre-noble`)                                     |
+| `tag`    | `String`  | Image tag (e.g. `21-jre-noble`)                                     |
 | `digest` | `String?` | Image digest in `sha256:<hash>` format                              |
 
 ### OCI Notation Conversion
@@ -118,24 +116,24 @@ rootProject.name = "hivemq-platform-monitoring"
 ## Renovate Integration
 
 To enable automatic Docker image updates via [Renovate](https://docs.renovatebot.com/), add a
-[JSONata custom manager](https://docs.renovatebot.com/modules/manager/jsonata/) to your `renovate.json5`:
+[regex custom manager](https://docs.renovatebot.com/modules/manager/regex/) to your `renovate.json5`:
 
 ```json5
 {
     enabledManagers: [
         // ... your existing managers ...
-        'jsonata',
+        'regex',
     ],
     customManagers: [
         {
-            customType: 'jsonata',
+            customType: 'regex',
             datasourceTemplate: 'docker',
             description: 'OCI images in oci.versions.toml',
-            fileFormat: 'toml',
             managerFilePatterns: ['**/oci.versions.toml'],
             matchStrings: [
-                'oci[$not(update = false)].{"depName": image, "currentValue": tag, "currentDigest": digest}',
+                'image\\s*=\\s*"(?<depName>[^"]+)"\\nreference\\s*=\\s*"(?<currentValue>[^@]+)@(?<currentDigest>[^"]+)"',
             ],
+            autoReplaceStringTemplate: 'image = "{{depName}}"\\nreference = "{{newValue}}@{{#if newDigest}}{{newDigest}}{{else}}{{currentDigest}}{{/if}}"',
             versioningTemplate: 'docker',
         },
     ],
@@ -144,18 +142,10 @@ To enable automatic Docker image updates via [Renovate](https://docs.renovatebot
 
 This will:
 
-- Detect all OCI image entries in `oci.versions.toml`
-- Skip entries with `update = false`
+- Detect OCI image entries with a `reference` field in `oci.versions.toml`
+- Skip entries with `pinnedReference` (they are invisible to the regex)
 - Propose tag updates with semantic versioning via the Docker datasource
-- Update digests when tags change (if `digest` is present)
-
-### Important Notes
-
-- `managerFilePatterns` uses **glob** syntax by default (regex requires `/slash/` delimiters)
-- The JSONata filter uses `$not(update = false)` instead of `update != false` because
-  `undefined != false` evaluates to `undefined` (falsy) in JSONata
-- All entries should have a `digest` field for Renovate digest pinning to work — entries without
-  a `digest` won't get digest-pinned by Renovate
+- Update digests when tags change
 
 ### Suppressing gradle-oci Platform Warnings
 

@@ -36,15 +36,13 @@ class OciVersionCatalogPlugin : Plugin<Settings> {
         for (i in 0 until ociArray.size()) {
             val table = ociArray.getTable(i)
             val name = table.getString("name") ?: error("Missing 'name' in [[oci]] entry $i")
-            entries.add(
-                OciImageEntry(
-                    name = name,
-                    image = table.getString("image") ?: error("Missing 'image' for '$name'"),
-                    digest = table.getString("digest"),
-                    tag = table.getString("tag"),
-                    update = table.getBoolean("update") ?: true,
-                )
-            )
+            val image = table.getString("image") ?: error("Missing 'image' for '$name'")
+            val ref = table.getString("reference") ?: table.getString("pinnedReference")
+                ?: error("Missing 'reference' or 'pinnedReference' for '$name'")
+            val atIndex = ref.indexOf('@')
+            val tag = if (atIndex >= 0) ref.substring(0, atIndex) else ref
+            val digest = if (atIndex >= 0) ref.substring(atIndex + 1) else null
+            entries.add(OciImageEntry(name = name, image = image, tag = tag, digest = digest))
         }
 
         settings.gradle.allprojects {

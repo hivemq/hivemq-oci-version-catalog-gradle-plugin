@@ -62,8 +62,7 @@ class OciVersionCatalogPluginTest {
                 [[oci]]
                 name = "eclipse-temurin"
                 image = "library/eclipse-temurin"
-                digest = "sha256:01868992089327fe0871354378a499e34823e6c7439d32ca62a4876a152f6ccb"
-                tag = "21-jre-noble"
+                reference = "21-jre-noble@sha256:01868992089327fe0871354378a499e34823e6c7439d32ca62a4876a152f6ccb"
             """.trimIndent(),
             buildExtra = """
                 tasks.register("printOci") {
@@ -94,9 +93,7 @@ class OciVersionCatalogPluginTest {
                 [[oci]]
                 name = "busybox"
                 image = "library/busybox"
-                digest = "sha256:b3255e7dfbcd10cb367af0d409747d511aeb66dfac98cf30e97e87e4207dd76f"
-                tag = "latest"
-                update = false
+                pinnedReference = "latest@sha256:b3255e7dfbcd10cb367af0d409747d511aeb66dfac98cf30e97e87e4207dd76f"
             """.trimIndent(),
             buildExtra = """
                 tasks.register("printOci") {
@@ -120,7 +117,7 @@ class OciVersionCatalogPluginTest {
                 [[oci]]
                 name = "k3s"
                 image = "rancher/k3s"
-                tag = "v1.35.1-k3s1"
+                reference = "v1.35.1-k3s1"
             """.trimIndent(),
             buildExtra = """
                 tasks.register("printOci") {
@@ -146,15 +143,12 @@ class OciVersionCatalogPluginTest {
                 [[oci]]
                 name = "k3s-minimum"
                 image = "rancher/k3s"
-                digest = "sha256:aaaa"
-                tag = "v1.24.17-k3s1"
-                update = false
+                pinnedReference = "v1.24.17-k3s1@sha256:aaaa"
 
                 [[oci]]
                 name = "k3s-latest"
                 image = "rancher/k3s"
-                digest = "sha256:bbbb"
-                tag = "v1.35.3-k3s1"
+                reference = "v1.35.3-k3s1@sha256:bbbb"
             """.trimIndent(),
             buildExtra = """
                 tasks.register("printOci") {
@@ -177,15 +171,13 @@ class OciVersionCatalogPluginTest {
     }
 
     @Test
-    fun `update false entries are still accessible`() {
+    fun `pinnedReference entries are accessible like reference entries`() {
         setup(
             toml = """
                 [[oci]]
                 name = "busybox"
                 image = "library/busybox"
-                digest = "sha256:abcd"
-                tag = "latest"
-                update = false
+                pinnedReference = "latest@sha256:abcd"
             """.trimIndent(),
             buildExtra = """
                 tasks.register("printOci") {

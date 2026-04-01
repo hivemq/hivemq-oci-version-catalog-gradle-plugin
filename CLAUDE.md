@@ -18,6 +18,14 @@ Gradle settings plugin that reads `gradle/oci.versions.toml` and provides versio
 - `src/main/kotlin/.../OciVersionCatalogGroupExtension.kt` — Intermediate node for hyphen-separated names
 - `src/main/kotlin/.../OciVersionCatalogExtension.kt` — Top-level `ociImages` extension
 
+## TOML Format
+
+Each `[[oci]]` entry has `name`, `image`, and either `reference` or `pinnedReference`:
+
+- `reference = "tag@sha256:hash"` — updated by Renovate
+- `pinnedReference = "tag@sha256:hash"` — invisible to Renovate (not updated)
+- The `@sha256:hash` part is optional (tag-only entries are supported)
+
 ## Plugin Details
 
 - **Plugin ID:** `com.hivemq.tools.oci-version-catalog`

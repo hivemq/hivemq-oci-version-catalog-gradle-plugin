@@ -19,17 +19,12 @@ package com.hivemq.tools.oci.version.catalog
 data class OciImageEntry(
     val name: String,
     val image: String,
+    val tag: String,
     val digest: String?,
-    val tag: String?,
-    val update: Boolean,
 ) {
     fun toOciNotation(): String {
         val groupAndName = image.replace('/', ':')
-        val version = when {
-            digest != null -> digest.replace("sha256:", "sha256!")
-            tag != null -> tag
-            else -> error("OCI image entry '$name' must have either a digest or a tag")
-        }
+        val version = digest?.replace("sha256:", "sha256!") ?: tag
         return "$groupAndName:$version"
     }
 }

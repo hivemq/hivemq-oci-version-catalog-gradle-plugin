@@ -21,7 +21,7 @@ import javax.inject.Inject
 abstract class OciVersionCatalogEntryExtension @Inject constructor(entry: OciImageEntry) {
 
     val image: String = entry.image
-    val tag: String? = entry.tag
+    val tag: String = entry.tag
     val digest: String? = entry.digest
     val oci: String = entry.toOciNotation()
 }
