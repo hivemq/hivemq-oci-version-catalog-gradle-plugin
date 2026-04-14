@@ -30,13 +30,17 @@ class OciVersionCatalogPluginTest {
     private fun setup(toml: String? = null, buildExtra: String = "") {
         projectDir.resolve("settings.gradle.kts").writeText(
             """
-            plugins {
-                id("com.hivemq.tools.oci-version-catalog")
-            }
             rootProject.name = "test-project"
             """.trimIndent()
         )
-        projectDir.resolve("build.gradle.kts").writeText(buildExtra)
+        projectDir.resolve("build.gradle.kts").writeText(
+            """
+            plugins {
+                id("com.hivemq.tools.oci-version-catalog")
+            }
+            $buildExtra
+            """.trimIndent()
+        )
         if (toml != null) {
             val gradleDir = projectDir.resolve("gradle").also { it.mkdirs() }
             gradleDir.resolve("oci.versions.toml").writeText(toml)
