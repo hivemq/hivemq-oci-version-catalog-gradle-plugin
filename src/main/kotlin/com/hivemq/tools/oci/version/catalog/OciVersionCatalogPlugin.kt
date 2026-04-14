@@ -18,15 +18,14 @@ package com.hivemq.tools.oci.version.catalog
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.initialization.Settings
 import org.gradle.api.plugins.ExtensionAware
 import org.tomlj.Toml
 import java.io.File
 
-class OciVersionCatalogPlugin : Plugin<Settings> {
+class OciVersionCatalogPlugin : Plugin<Project> {
 
-    override fun apply(settings: Settings) {
-        val tomlFile = findTomlFile(settings.rootDir) ?: return
+    override fun apply(project: Project) {
+        val tomlFile = findTomlFile(project.rootDir) ?: return
 
         val result = Toml.parse(tomlFile.toPath())
         val ociArray = result.getArrayOrEmpty("oci")
@@ -45,9 +44,7 @@ class OciVersionCatalogPlugin : Plugin<Settings> {
             entries.add(OciImageEntry(name = name, image = image, tag = tag, digest = digest))
         }
 
-        settings.gradle.allprojects {
-            createExtension(this, entries)
-        }
+        createExtension(project, entries)
     }
 
     private fun createExtension(project: Project, entries: List<OciImageEntry>) {
