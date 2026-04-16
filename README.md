@@ -3,7 +3,7 @@
 [![Gradle Plugin Portal](https://img.shields.io/gradle-plugin-portal/v/com.hivemq.tools.oci-version-catalog?color=brightgreen&style=for-the-badge)](https://plugins.gradle.org/plugin/com.hivemq.tools.oci-version-catalog)
 [![GitHub](https://img.shields.io/github/license/hivemq/hivemq-oci-version-catalog-gradle-plugin?color=brightgreen&style=for-the-badge)](LICENSE)
 
-A Gradle settings plugin that reads OCI/Docker image definitions from `gradle/oci.versions.toml` and provides
+A Gradle project plugin that reads OCI/Docker image definitions from `gradle/oci.versions.toml` and provides
 version-catalog-like accessors for the [gradle-oci](https://github.com/sgtsilvio/gradle-oci) plugin.
 
 ## Example
@@ -26,15 +26,12 @@ image = "rancher/k3s"
 reference = "v1.35.3-k3s1@sha256:4607083d3cac07e1ccde7317297271d13ed5f60f35a78f33fcef84858a9f1d69"
 ```
 
-Contents of the `settings.gradle.kts` file:
+Contents of the `build.gradle.kts` file:
 ```kotlin
 plugins {
     id("com.hivemq.tools.oci-version-catalog") version "0.2.0"
 }
-```
 
-Contents of the `build.gradle.kts` file:
-```kotlin
 oci {
     imageDefinitions {
         register("main") {
@@ -101,16 +98,14 @@ If no digest is set, the tag is used as the version: `rancher:k3s:v1.35.1-k3s1`
 ### Composite Builds
 
 For included builds that need access to `ociImages`, apply the plugin in each included build's
-`settings.gradle.kts`. The plugin walks up the directory tree to find `gradle/oci.versions.toml`, so it
+`build.gradle.kts`. The plugin walks up the directory tree to find `gradle/oci.versions.toml`, so it
 automatically picks up the parent project's TOML file.
 
 ```kotlin
-// hivemq-platform-monitoring/settings.gradle.kts
+// hivemq-platform-monitoring/build.gradle.kts
 plugins {
     id("com.hivemq.tools.oci-version-catalog") version "0.2.0"
 }
-
-rootProject.name = "hivemq-platform-monitoring"
 ```
 
 ## Renovate Integration
