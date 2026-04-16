@@ -29,7 +29,7 @@ reference = "v1.35.3-k3s1@sha256:4607083d3cac07e1ccde7317297271d13ed5f60f35a78f3
 Contents of the `build.gradle.kts` file:
 ```kotlin
 plugins {
-    id("com.hivemq.tools.oci-version-catalog") version "0.2.0"
+    id("com.hivemq.tools.oci-version-catalog") version "0.3.0"
 }
 
 oci {
@@ -104,7 +104,7 @@ automatically picks up the parent project's TOML file.
 ```kotlin
 // hivemq-platform-monitoring/build.gradle.kts
 plugins {
-    id("com.hivemq.tools.oci-version-catalog") version "0.2.0"
+    id("com.hivemq.tools.oci-version-catalog") version "0.3.0"
 }
 ```
 
