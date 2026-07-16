@@ -22,9 +22,38 @@ data class OciImageEntry(
     val tag: String,
     val digest: String?,
 ) {
+    private val segments = image.split('/')
+
+    /**
+     * The registry host of [image], or `null` if [image] is not registry-qualified (implying Docker Hub).
+     *
+     * Renovate uses the `image` field verbatim as the dependency name, so registry-qualifying an image is what lets it
+     * resolve the image against the right registry. gradle-oci instead addresses registries separately, via
+     * `oci { registries { ... } }`, so the host is not part of the coordinate returned by [toOciNotation]. Exposing it
+     * here keeps `oci.versions.toml` the single place the image is declared.
+     */
+    val registry: String? = segments.first().takeIf { (segments.size > 1) && it.isRegistryHost() }
+
+    /** [image] without its registry host, i.e. the path of the image within its registry. */
+    val repository: String = if (registry == null) image else segments.drop(1).joinToString("/")
+
+    /** [repository] without the image name, i.e. the namespace the image lives in within its registry. */
+    val namespace: String = repository.split('/').dropLast(1).joinToString("/")
+
+    /**
+     * The coordinate group [toOciNotation] maps [namespace] to. gradle-oci derives the namespace back from this group,
+     * so a registry-qualified image needs an `imageMapping` to reverse it — see the README.
+     */
+    val group: String = namespace.replace('/', '.')
+
     fun toOciNotation(): String {
-        val groupAndName = image.replace('/', ':')
         val version = digest?.replace("sha256:", "sha256!") ?: tag
-        return "$groupAndName:$version"
+        return "$group:${repository.substringAfterLast('/')}:$version"
     }
 }
+
+/**
+ * Distinguishes a registry host from the first path segment of a Docker Hub image, following the same convention as the
+ * OCI distribution spec: a host contains a `.` (domain) or a `:` (port), with `localhost` as the only exception.
+ */
+private fun String.isRegistryHost() = ('.' in this) || (':' in this) || (this == "localhost")

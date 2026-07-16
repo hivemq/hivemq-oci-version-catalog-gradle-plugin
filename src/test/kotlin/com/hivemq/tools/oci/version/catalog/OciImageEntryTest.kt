@@ -67,4 +67,49 @@ class OciImageEntryTest {
         assertThat(entry.toOciNotation())
             .isEqualTo("library:busybox:sha256!b3255e7dfbcd10cb367af0d409747d511aeb66dfac98cf30e97e87e4207dd76f")
     }
+
+    @Test
+    fun `image without a registry host implies docker hub`() {
+        val entry = OciImageEntry(
+            name = "eclipse-temurin",
+            image = "library/eclipse-temurin",
+            tag = "21-jre-noble",
+            digest = null,
+        )
+        assertThat(entry.registry).isNull()
+        assertThat(entry.repository).isEqualTo("library/eclipse-temurin")
+        assertThat(entry.namespace).isEqualTo("library")
+        assertThat(entry.group).isEqualTo("library")
+    }
+
+    @Test
+    fun `registry qualified image is split into registry and repository`() {
+        val entry = OciImageEntry(
+            name = "eclipse-temurin",
+            image = "public.ecr.aws/y7j2u9c5/base-images/eclipse-temurin",
+            tag = "21-jre-noble",
+            digest = "sha256:1a407124990ecf35af8e80fabcf311218b590d6f3a7df61ce8a294efcb704dd4",
+        )
+        assertThat(entry.registry).isEqualTo("public.ecr.aws")
+        assertThat(entry.repository).isEqualTo("y7j2u9c5/base-images/eclipse-temurin")
+        assertThat(entry.namespace).isEqualTo("y7j2u9c5/base-images")
+        assertThat(entry.group).isEqualTo("y7j2u9c5.base-images")
+        assertThat(entry.toOciNotation()).isEqualTo(
+            "y7j2u9c5.base-images:eclipse-temurin:sha256!1a407124990ecf35af8e80fabcf311218b590d6f3a7df61ce8a294efcb704dd4",
+        )
+    }
+
+    @Test
+    fun `registry host is detected by port`() {
+        val entry = OciImageEntry(name = "nginx", image = "localhost:5000/nginx", tag = "latest", digest = null)
+        assertThat(entry.registry).isEqualTo("localhost:5000")
+        assertThat(entry.repository).isEqualTo("nginx")
+    }
+
+    @Test
+    fun `single segment image is not mistaken for a registry host`() {
+        val entry = OciImageEntry(name = "nginx", image = "nginx", tag = "latest", digest = null)
+        assertThat(entry.registry).isNull()
+        assertThat(entry.repository).isEqualTo("nginx")
+    }
 }
