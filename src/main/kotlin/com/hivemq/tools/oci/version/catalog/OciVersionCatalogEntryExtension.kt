@@ -24,4 +24,8 @@ abstract class OciVersionCatalogEntryExtension @Inject constructor(entry: OciIma
     val tag: String = entry.tag
     val digest: String? = entry.digest
     val oci: String = entry.toOciNotation()
+    val registry: String? = entry.registry
+    val repository: String = entry.repository
+    val namespace: String = entry.namespace
+    val group: String = entry.group
 }
