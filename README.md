@@ -6,6 +6,11 @@
 A Gradle project plugin that reads OCI/Docker image definitions from `gradle/oci.versions.toml` and provides
 version-catalog-like accessors for the [gradle-oci](https://github.com/sgtsilvio/gradle-oci) plugin.
 
+For images of a registry other than Docker Hub, the plugin also declares the gradle-oci registry and the image
+mapping, so that a registry is configured in one place, the `image` value of the entry. This covers the entries of
+the applying build as well as the entries of the other builds of the build tree, see
+[Registry-Qualified Images](#registry-qualified-images) and [Registries of Other Builds](#registries-of-other-builds).
+
 ## Example
 
 Contents of the `gradle/oci.versions.toml` file:
@@ -51,6 +56,9 @@ oci.of(integrationTest) {
 }
 ```
 
+All images of this example live on Docker Hub, which gradle-oci uses by default, so no registry is declared. An
+`image` that names a registry host makes the plugin declare that registry, see the next section.
+
 ## Configuration
 
 ### TOML Fields
@@ -83,27 +91,46 @@ the same convention the OCI distribution spec uses. Qualifying the image keeps t
 this file, which is what lets Renovate resolve it against the right registry: it uses `image`
 verbatim as the dependency name.
 
-gradle-oci addresses registries separately, so the host is not part of the `oci` notation. Use the
-`registry`, `namespace`, and `group` accessors to declare the registry without repeating the image
-path in the build script:
+gradle-oci addresses registries separately, so the host is not part of the `oci` notation. The plugin
+declares the registry and the matching image mapping itself, for every registry-qualified entry, so
+no build script has to repeat the image path:
 
 ```kotlin
-val temurin = ociImages.eclipse.temurin
-oci {
-    registries {
-        registry("ecrPublic") {
-            url = uri("https://${temurin.registry}")
-            exclusiveContent { includeGroup(temurin.group) } // else Docker Hub is searched too
-        }
-    }
-    imageMapping {
-        mapGroup(temurin.group) { toImage(nameSpec("${temurin.namespace}/") + name) }
-    }
+// declared by the plugin for the image "ghcr.io/acme/base-images/eclipse-temurin",
+// shown here only to describe what it does
+registry("ghcrIo") {
+    url = uri("https://ghcr.io")
+    exclusiveContent { includeGroup("acme.base-images") } // else Docker Hub is searched too
+}
+imageMapping {
+    mapGroup("acme.base-images") { toImage(nameSpec("acme/base-images/") + name) }
 }
 ```
 
-The `imageMapping` is required whenever `namespace` has more than one segment, because gradle-oci
-would otherwise derive the wrong namespace back from the coordinate group.
+The image mapping is needed whenever `namespace` has more than one segment, because gradle-oci
+derives the namespace back from the coordinate group by dropping everything up to the first dot.
+
+### Registries of Other Builds
+
+A build that consumes an image built by another build resolves that image's parent images against its
+own repositories, because Gradle repositories are not part of a published component. Such a build
+therefore needs the registry of a parent image although it never declares that image itself.
+
+To keep the image declared in exactly one `oci.versions.toml`, the plugin also reads the
+`oci.versions.toml` of the other builds of the build tree and declares their registries as well. Only
+the registry declaration is shared, the `ociImages` accessors always come from the own file.
+
+Gradle exposes the directly included builds of a build, so a build that provides an image has to be
+included directly by the consuming build:
+
+```kotlin
+// settings.gradle.kts of the consuming build
+includeBuild("../app") // builds the image
+includeBuild("../base") // declares the parent image, included by ../app as well
+```
+
+A group can only resolve to a single registry and namespace. If two builds of the tree claim the same
+group with different `image` values, the build fails with both values named.
 
 ### Accessor Mapping
 
@@ -208,6 +235,9 @@ look up `linux:arm64` as a Maven package. Suppress this with a package rule:
 
 - Gradle 9.0 or higher is required
 - JDK 11 or higher is required
+- The gradle-oci plugin is optional. When it is applied, its version has to be compatible with the
+  version this plugin is built against, currently `0.28.0`. An incompatible version fails the build
+  at plugin apply, naming both versions.
 
 ## Build
 

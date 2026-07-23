@@ -13,6 +13,9 @@ Gradle project plugin that reads `gradle/oci.versions.toml` and provides version
 ## Key Files
 
 - `src/main/kotlin/.../OciVersionCatalogPlugin.kt` — Project plugin entry point, reads TOML, registers `ociImages` extension on the applying project
+- `src/main/kotlin/.../OciVersionsToml.kt` — Finds and parses `gradle/oci.versions.toml` files
+- `src/main/kotlin/.../OciRegistries.kt` — Declares gradle-oci registries and image mappings for the registry-qualified entries of the build tree
+- `src/main/kotlin/.../OciPluginCompatibility.kt` — Turns a gradle-oci API incompatibility into an error naming both plugin versions
 - `src/main/kotlin/.../OciImageEntry.kt` — Data class with `toOciNotation()` conversion
 - `src/main/kotlin/.../OciVersionCatalogEntryExtension.kt` — Leaf accessor with `image`, `tag`, `digest`, `oci` properties
 - `src/main/kotlin/.../OciVersionCatalogGroupExtension.kt` — Intermediate node for hyphen-separated names
@@ -34,6 +37,8 @@ Each `[[oci]]` entry has `name`, `image`, and either `reference` or `pinnedRefer
 - **Extension name:** `ociImages`
 - Hyphens in TOML `name` become nested accessors: `eclipse-temurin` → `ociImages.eclipse.temurin`
 - Walks up directories from `project.rootDir` to find `gradle/oci.versions.toml` (supports composite/included builds)
+- Declares a gradle-oci registry plus image mapping per registry-qualified entry, taken from the own TOML and from the TOML of the other builds of the build tree (directly included builds and their parents)
+- gradle-oci is a `compileOnly` dependency, all its API usage runs inside `withOciPluginCompatibility`
 
 ## Build & Test
 
