@@ -78,32 +78,31 @@ image = "public.ecr.aws/y7j2u9c5/base-images/eclipse-temurin"
 reference = "21-jre-noble@sha256:1a407124990ecf35af8e80fabcf311218b590d6f3a7df61ce8a294efcb704dd4"
 ```
 
-The first segment is treated as a registry host if it contains a `.` or a `:`, or is `localhost` —
+The first segment is treated as a registry host if it contains a `.` or a `:`, or is `localhost`,
 the same convention the OCI distribution spec uses. Qualifying the image keeps the whole reference in
 this file, which is what lets Renovate resolve it against the right registry: it uses `image`
 verbatim as the dependency name.
 
-gradle-oci addresses registries separately, so the host is not part of the `oci` notation. Use the
-`registry`, `namespace`, and `group` accessors to declare the registry without repeating the image
-path in the build script:
+The `oci` notation of a registry-qualified image carries the host in its group, separated from the
+namespace by `!` (e.g. `public.ecr.aws!y7j2u9c5.base-images:eclipse-temurin:sha256!...`). gradle-oci
+resolves such a coordinate against that registry without a declared registry or an `imageMapping`:
 
 ```kotlin
-val temurin = ociImages.eclipse.temurin
 oci {
-    registries {
-        registry("ecrPublic") {
-            url = uri("https://${temurin.registry}")
-            exclusiveContent { includeGroup(temurin.group) } // else Docker Hub is searched too
+    imageDefinitions.register("main") {
+        allPlatforms {
+            dependencies {
+                runtime(ociImages.eclipse.temurin.oci)
+            }
         }
-    }
-    imageMapping {
-        mapGroup(temurin.group) { toImage(nameSpec("${temurin.namespace}/") + name) }
     }
 }
 ```
 
-The `imageMapping` is required whenever `namespace` has more than one segment, because gradle-oci
-would otherwise derive the wrong namespace back from the coordinate group.
+This requires the gradle-oci version that added registry-qualified coordinates. With an older
+gradle-oci the group is treated as a Docker Hub namespace and the image fails to resolve. A registry
+that needs credentials, or a host with an explicit port, still has to be declared as a gradle-oci
+`registry`.
 
 ### Accessor Mapping
 
@@ -126,14 +125,14 @@ Each accessor provides the following properties:
 | `registry`   | `String?` | Registry host, or `null` if unqualified (e.g. `public.ecr.aws`)        |
 | `repository` | `String`  | Image path within the registry (e.g. `y7j2u9c5/base-images/eclipse-temurin`) |
 | `namespace`  | `String`  | `repository` without the image name (e.g. `y7j2u9c5/base-images`)      |
-| `group`      | `String`  | Coordinate group of `oci` (e.g. `y7j2u9c5.base-images`)                |
+| `group`      | `String`  | Coordinate group of `oci`, with the host for a qualified image (e.g. `public.ecr.aws!y7j2u9c5.base-images`) |
 
 ### OCI Notation Conversion
 
 The `oci` property converts the TOML format to gradle-oci dependency notation:
 
-- The registry host, if any, is dropped (gradle-oci addresses registries separately)
 - The namespace becomes the coordinate group, `/` becoming `.` (e.g. `rancher/k3s` becomes `rancher:k3s`)
+- A registry host, if any, is prepended to the group, separated by `!` (e.g. `public.ecr.aws/y7j2u9c5/base-images/eclipse-temurin` becomes `public.ecr.aws!y7j2u9c5.base-images:eclipse-temurin`)
 - Digest `sha256:` becomes `sha256!` (e.g. `sha256:a1234...` becomes `sha256!a1234...`)
 - Result: `rancher:k3s:sha256!a1234...`
 

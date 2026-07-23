@@ -41,10 +41,11 @@ data class OciImageEntry(
     val namespace: String = repository.split('/').dropLast(1).joinToString("/")
 
     /**
-     * The coordinate group [toOciNotation] maps [namespace] to. gradle-oci derives the namespace back from this group,
-     * so a registry-qualified image needs an `imageMapping` to reverse it — see the README.
+     * The coordinate group [toOciNotation] maps [namespace] to. For a registry-qualified image the group carries the
+     * [registry] host, separated from the namespace by `!`, so gradle-oci resolves the image against that registry
+     * without a declared registry or an `imageMapping`. For a Docker Hub image it is just the namespace.
      */
-    val group: String = namespace.replace('/', '.')
+    val group: String = if (registry == null) namespace.replace('/', '.') else "$registry!${namespace.replace('/', '.')}"
 
     fun toOciNotation(): String {
         val version = digest?.replace("sha256:", "sha256!") ?: tag

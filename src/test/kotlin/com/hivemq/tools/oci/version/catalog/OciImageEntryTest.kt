@@ -93,9 +93,9 @@ class OciImageEntryTest {
         assertThat(entry.registry).isEqualTo("public.ecr.aws")
         assertThat(entry.repository).isEqualTo("y7j2u9c5/base-images/eclipse-temurin")
         assertThat(entry.namespace).isEqualTo("y7j2u9c5/base-images")
-        assertThat(entry.group).isEqualTo("y7j2u9c5.base-images")
+        assertThat(entry.group).isEqualTo("public.ecr.aws!y7j2u9c5.base-images")
         assertThat(entry.toOciNotation()).isEqualTo(
-            "y7j2u9c5.base-images:eclipse-temurin:sha256!1a407124990ecf35af8e80fabcf311218b590d6f3a7df61ce8a294efcb704dd4",
+            "public.ecr.aws!y7j2u9c5.base-images:eclipse-temurin:sha256!1a407124990ecf35af8e80fabcf311218b590d6f3a7df61ce8a294efcb704dd4",
         )
     }
 
