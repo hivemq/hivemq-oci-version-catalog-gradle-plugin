@@ -11,4 +11,13 @@
     addLabels: [
         'integrations-team-coordination',
     ],
+    packageRules: [
+        {
+            description: 'the gradle-oci version in build.gradle.kts is pinned to test the compatibility error, only the version catalog entry is updated',
+            matchManagers: ['gradle'],
+            matchFileNames: ['build.gradle.kts'],
+            matchPackageNames: ['io.github.sgtsilvio.gradle:gradle-oci'],
+            enabled: false,
+        },
+    ],
 }

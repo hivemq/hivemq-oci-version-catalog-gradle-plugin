@@ -19,32 +19,16 @@ package com.hivemq.tools.oci.version.catalog
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.ExtensionAware
-import org.tomlj.Toml
-import java.io.File
 
 class OciVersionCatalogPlugin : Plugin<Project> {
 
     override fun apply(project: Project) {
-        val tomlFile = findTomlFile(project.rootDir) ?: return
-
-        val result = Toml.parse(tomlFile.toPath())
-        val ociArray = result.getArrayOrEmpty("oci")
-        if (ociArray.isEmpty) return
-
-        val entries = mutableListOf<OciImageEntry>()
-        for (i in 0 until ociArray.size()) {
-            val table = ociArray.getTable(i)
-            val name = table.getString("name") ?: error("Missing 'name' in [[oci]] entry $i")
-            val image = table.getString("image") ?: error("Missing 'image' for '$name'")
-            val ref = table.getString("reference") ?: table.getString("pinnedReference")
-                ?: error("Missing 'reference' or 'pinnedReference' for '$name'")
-            val atIndex = ref.indexOf('@')
-            val tag = if (atIndex >= 0) ref.substring(0, atIndex) else ref
-            val digest = if (atIndex >= 0) ref.substring(atIndex + 1) else null
-            entries.add(OciImageEntry(name = name, image = image, tag = tag, digest = digest))
+        val tomlFile = findTomlFile(project.rootDir)
+        val entries = if (tomlFile == null) emptyList() else parseEntries(tomlFile).map { tomlFile to it }
+        if (entries.isNotEmpty()) {
+            createExtension(project, entries.map { it.second })
         }
-
-        createExtension(project, entries)
+        configureOciRegistries(project, entries)
     }
 
     private fun createExtension(project: Project, entries: List<OciImageEntry>) {
@@ -62,15 +46,5 @@ class OciVersionCatalogPlugin : Plugin<Project> {
             }
             parent.extensions.create(segments.last(), OciVersionCatalogEntryExtension::class.java, entry)
         }
-    }
-
-    private fun findTomlFile(startDir: File): File? {
-        var dir: File? = startDir
-        while (dir != null) {
-            val candidate = dir.resolve("gradle/oci.versions.toml")
-            if (candidate.isFile) return candidate
-            dir = dir.parentFile
-        }
-        return null
     }
 }

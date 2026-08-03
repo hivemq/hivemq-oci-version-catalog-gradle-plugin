@@ -1,3 +1,5 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
 plugins {
     `kotlin-dsl`
     signing
@@ -43,11 +45,23 @@ tasks.compileKotlin {
 
 repositories {
     mavenCentral()
+    gradlePluginPortal()
 }
 
 dependencies {
     implementation(libs.tomlj)
+    compileOnly(libs.gradleOci)
     testImplementation(libs.assertj)
+}
+
+tasks.processResources {
+    val pluginVersion = version.toString()
+    val gradleOciVersion = libs.versions.gradleOci.get()
+    inputs.property("pluginVersion", pluginVersion)
+    inputs.property("gradleOciVersion", gradleOciVersion)
+    filesMatching("com/hivemq/tools/oci/version/catalog/versions.properties") {
+        filter<ReplaceTokens>("tokens" to mapOf("pluginVersion" to pluginVersion, "gradleOciVersion" to gradleOciVersion))
+    }
 }
 
 gradlePlugin {
@@ -73,6 +87,27 @@ testing {
         "test"(JvmTestSuite::class) {
             useJUnitJupiter(libs.versions.junit.jupiter)
         }
+    }
+}
+
+// the gradle-oci plugin is injected into the test builds instead of resolved from the plugin portal, so that the tests
+// pick the version to test against and both plugins end up in the same class loader scope, as in a real build
+val gradleOciUnderTest: Configuration by configurations.creating
+val gradleOciIncompatibleUnderTest: Configuration by configurations.creating
+
+dependencies {
+    gradleOciUnderTest(libs.gradleOci)
+    // last version without OciRegistries.exclusiveContent, kept out of the version catalog so that it is not updated
+    gradleOciIncompatibleUnderTest("io.github.sgtsilvio.gradle:gradle-oci:0.13.0")
+}
+
+tasks.test {
+    val pluginClasspath = sourceSets.main.get().runtimeClasspath
+    inputs.files(pluginClasspath, gradleOciUnderTest, gradleOciIncompatibleUnderTest)
+    doFirst {
+        systemProperty("pluginClasspath", pluginClasspath.asPath)
+        systemProperty("gradleOciClasspath", gradleOciUnderTest.asPath)
+        systemProperty("gradleOciIncompatibleClasspath", gradleOciIncompatibleUnderTest.asPath)
     }
 }
 
