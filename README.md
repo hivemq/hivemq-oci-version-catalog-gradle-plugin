@@ -74,7 +74,7 @@ with a registry host selects a different registry:
 ```toml
 [[oci]]
 name = "eclipse-temurin"
-image = "public.ecr.aws/y7j2u9c5/base-images/eclipse-temurin"
+image = "public.ecr.aws/hivemq/library/eclipse-temurin"
 reference = "21-jre-noble@sha256:1a407124990ecf35af8e80fabcf311218b590d6f3a7df61ce8a294efcb704dd4"
 ```
 
@@ -124,9 +124,9 @@ Each accessor provides the following properties:
 | `tag`        | `String`  | Image tag (e.g. `21-jre-noble`)                                        |
 | `digest`     | `String?` | Image digest in `sha256:<hash>` format                                 |
 | `registry`   | `String?` | Registry host, or `null` if unqualified (e.g. `public.ecr.aws`)        |
-| `repository` | `String`  | Image path within the registry (e.g. `y7j2u9c5/base-images/eclipse-temurin`) |
-| `namespace`  | `String`  | `repository` without the image name (e.g. `y7j2u9c5/base-images`)      |
-| `group`      | `String`  | Coordinate group of `oci` (e.g. `y7j2u9c5.base-images`)                |
+| `repository` | `String`  | Image path within the registry (e.g. `hivemq/library/eclipse-temurin`) |
+| `namespace`  | `String`  | `repository` without the image name (e.g. `hivemq/library`)            |
+| `group`      | `String`  | Coordinate group of `oci` (e.g. `hivemq.library`)                      |
 
 ### OCI Notation Conversion
 
