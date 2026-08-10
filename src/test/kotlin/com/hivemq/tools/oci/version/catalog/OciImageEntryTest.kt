@@ -86,16 +86,16 @@ class OciImageEntryTest {
     fun `registry qualified image is split into registry and repository`() {
         val entry = OciImageEntry(
             name = "eclipse-temurin",
-            image = "public.ecr.aws/y7j2u9c5/base-images/eclipse-temurin",
+            image = "public.ecr.aws/hivemq/library/eclipse-temurin",
             tag = "21-jre-noble",
             digest = "sha256:1a407124990ecf35af8e80fabcf311218b590d6f3a7df61ce8a294efcb704dd4",
         )
         assertThat(entry.registry).isEqualTo("public.ecr.aws")
-        assertThat(entry.repository).isEqualTo("y7j2u9c5/base-images/eclipse-temurin")
-        assertThat(entry.namespace).isEqualTo("y7j2u9c5/base-images")
-        assertThat(entry.group).isEqualTo("y7j2u9c5.base-images")
+        assertThat(entry.repository).isEqualTo("hivemq/library/eclipse-temurin")
+        assertThat(entry.namespace).isEqualTo("hivemq/library")
+        assertThat(entry.group).isEqualTo("hivemq.library")
         assertThat(entry.toOciNotation()).isEqualTo(
-            "y7j2u9c5.base-images:eclipse-temurin:sha256!1a407124990ecf35af8e80fabcf311218b590d6f3a7df61ce8a294efcb704dd4",
+            "hivemq.library:eclipse-temurin:sha256!1a407124990ecf35af8e80fabcf311218b590d6f3a7df61ce8a294efcb704dd4",
         )
     }
 
