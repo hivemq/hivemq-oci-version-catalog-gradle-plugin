@@ -29,7 +29,7 @@ reference = "v1.35.3-k3s1@sha256:4607083d3cac07e1ccde7317297271d13ed5f60f35a78f3
 Contents of the `build.gradle.kts` file:
 ```kotlin
 plugins {
-    id("com.hivemq.tools.oci-version-catalog") version "0.4.0"
+    id("com.hivemq.tools.oci-version-catalog") version "0.4.1"
 }
 
 oci {
